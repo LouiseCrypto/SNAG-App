@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import axios from 'axios'
 import { formatDistanceToNow } from 'date-fns'
 
-const API = '/api'
+const API = import.meta.env.VITE_API_URL
 const SECRET = '1234'
 
 export default function LoginPage() {

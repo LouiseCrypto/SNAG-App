@@ -12,5 +12,8 @@ frontend/snag.db
 frontend/node_modules/
 frontend/dist/
 
+# Local env overrides (keep .env.production in git)
+frontend/.env.local
+
 # OS
 .DS_Store

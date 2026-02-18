@@ -4,7 +4,7 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 
-const API = '/api'
+const API = import.meta.env.VITE_API_URL
 
 function StatCard({ icon, label, value, color }) {
   return (

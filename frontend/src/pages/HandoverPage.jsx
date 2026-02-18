@@ -4,7 +4,7 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 import { formatDistanceToNow } from 'date-fns'
 
-const API = '/api'
+const API = import.meta.env.VITE_API_URL
 const EMOJIS = ['👍', '❤️', '😂', '😮', '🔥', '✅']
 
 export default function HandoverPage() {
