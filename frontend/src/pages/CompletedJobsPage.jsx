@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { format } from 'date-fns'
+import DetailModal from '../components/DetailModal'
 
 const API = 'https://snag-backend.onrender.com'
 
@@ -8,6 +9,8 @@ export default function CompletedJobsPage() {
   const [ppm, setPpm] = useState([])
   const [reactive, setReactive] = useState([])
   const [tab, setTab] = useState('ppm')
+  const [detail, setDetail] = useState(null)
+  const [detailType, setDetailType] = useState('ppm')
 
   useEffect(() => {
     axios.get(`${API}/ppm`).then(r => setPpm(r.data.filter(j => j.status === 'Completed'))).catch(() => {})
@@ -15,6 +18,11 @@ export default function CompletedJobsPage() {
   }, [])
 
   const jobs = tab === 'ppm' ? ppm : reactive
+
+  const openDetail = (job) => {
+    setDetailType(tab)
+    setDetail(job)
+  }
 
   return (
     <div className="space-y-5 animate-fadeIn">
@@ -38,13 +46,17 @@ export default function CompletedJobsPage() {
               <th className="pb-3 pr-3 font-semibold">Location</th>
               <th className="pb-3 pr-3 font-semibold">Engineer</th>
               <th className="pb-3 pr-3 font-semibold">Completed</th>
-              <th className="pb-3 font-semibold">Notes</th>
+              <th className="pb-3 pr-3 font-semibold">Notes</th>
               <th className="pb-3 font-semibold text-center">Done</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
             {jobs.map((job, i) => (
-              <tr key={job.id} className="hover:bg-orange-50 transition-colors">
+              <tr
+                key={job.id}
+                onClick={() => openDetail(job)}
+                className="hover:bg-orange-50 transition-colors cursor-pointer"
+              >
                 <td className="py-3 pr-3 text-gray-400 font-mono text-xs">{i + 1}</td>
                 <td className="py-3 pr-3 font-medium text-gray-900">{job.title}</td>
                 <td className="py-3 pr-3 text-gray-600">{job.location}</td>
@@ -69,6 +81,10 @@ export default function CompletedJobsPage() {
           </tbody>
         </table>
       </div>
+
+      {detail && (
+        <DetailModal item={detail} type={detailType} onClose={() => setDetail(null)} />
+      )}
     </div>
   )
 }

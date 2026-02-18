@@ -11,20 +11,8 @@ function fireConfetti() {
   const end = Date.now() + 2000
   const colors = ['#F97316', '#000000', '#ffffff']
   ;(function frame() {
-    confetti({
-      particleCount: 3,
-      angle: 60,
-      spread: 55,
-      origin: { x: 0 },
-      colors,
-    })
-    confetti({
-      particleCount: 3,
-      angle: 120,
-      spread: 55,
-      origin: { x: 1 },
-      colors,
-    })
+    confetti({ particleCount: 3, angle: 60,  spread: 55, origin: { x: 0 }, colors })
+    confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors })
     if (Date.now() < end) requestAnimationFrame(frame)
   })()
 }
@@ -62,23 +50,36 @@ export default function OvertimePage() {
     }
   }
 
-  const myTotal = logs
-    .filter(l => l.engineer_name === engineer?.name)
-    .reduce((sum, l) => sum + l.hours, 0)
+  const togglePaid = async (id) => {
+    try {
+      await axios.patch(`${API}/overtime/${id}/paid`)
+      await fetchLogs()
+    } catch {
+      toast.error('Failed to update')
+    }
+  }
+
+  const myLogs = logs.filter(l => l.engineer_name === engineer?.name)
+  const myPaid   = myLogs.filter(l => l.paid).reduce((s, l) => s + l.hours, 0)
+  const myUnpaid = myLogs.filter(l => !l.paid).reduce((s, l) => s + l.hours, 0)
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fadeIn">
       <h1 className="text-3xl font-black text-gray-900">Overtime Tracker ⏰</h1>
 
-      {/* Summary */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Summary — Paid vs Unpaid */}
+      <div className="grid grid-cols-3 gap-4">
         <div className="card text-center">
-          <span className="text-4xl font-black text-orange-500">{myTotal.toFixed(1)}h</span>
-          <p className="text-sm text-gray-500 mt-1">My Total Overtime</p>
+          <span className="text-3xl font-black text-green-500">{myPaid.toFixed(1)}h</span>
+          <p className="text-xs text-gray-500 mt-1 font-medium">My Paid</p>
         </div>
         <div className="card text-center">
-          <span className="text-4xl font-black text-gray-900">{logs.length}</span>
-          <p className="text-sm text-gray-500 mt-1">All Entries</p>
+          <span className="text-3xl font-black text-orange-500">{myUnpaid.toFixed(1)}h</span>
+          <p className="text-xs text-gray-500 mt-1 font-medium">My Unpaid</p>
+        </div>
+        <div className="card text-center">
+          <span className="text-3xl font-black text-gray-900">{logs.length}</span>
+          <p className="text-xs text-gray-500 mt-1 font-medium">All Entries</p>
         </div>
       </div>
 
@@ -141,12 +142,12 @@ export default function OvertimePage() {
                 <th className="pb-2 font-semibold">Date</th>
                 <th className="pb-2 font-semibold">Hours</th>
                 <th className="pb-2 font-semibold">Reason</th>
-                <th className="pb-2 font-semibold">Status</th>
+                <th className="pb-2 font-semibold text-center">Paid</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {logs.map(log => (
-                <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={log.id} className={`hover:bg-gray-50 transition-colors ${log.paid ? 'opacity-60' : ''}`}>
                   <td className="py-3">
                     <div className="flex items-center gap-2">
                       <div
@@ -160,11 +161,18 @@ export default function OvertimePage() {
                   </td>
                   <td className="py-3 text-gray-600">{format(new Date(log.date), 'dd MMM yy')}</td>
                   <td className="py-3 font-semibold text-orange-600">{log.hours}h</td>
-                  <td className="py-3 text-gray-600 max-w-[200px] truncate">{log.reason}</td>
-                  <td className="py-3">
-                    <span className={log.approved ? 'badge-green' : 'badge-gray'}>
-                      {log.approved ? 'Approved' : 'Pending'}
-                    </span>
+                  <td className="py-3 text-gray-600 max-w-[180px] truncate">{log.reason}</td>
+                  <td className="py-3 text-center">
+                    <button
+                      onClick={() => togglePaid(log.id)}
+                      title={log.paid ? 'Mark as Unpaid' : 'Mark as Paid'}
+                      className={`w-6 h-6 rounded-md border-2 flex items-center justify-center mx-auto transition-all active:scale-90
+                        ${log.paid
+                          ? 'border-green-500 bg-green-500 text-white'
+                          : 'border-gray-300 hover:border-green-400'}`}
+                    >
+                      {log.paid && '✓'}
+                    </button>
                   </td>
                 </tr>
               ))}

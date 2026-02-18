@@ -37,6 +37,21 @@ def _seed():
         db.close()
 
 _seed()
+
+# ─── Safe column migrations (add new columns to existing DB) ─────────────────
+def _migrate():
+    from sqlalchemy import text
+    with database.engine.connect() as conn:
+        for sql in [
+            "ALTER TABLE overtime_logs ADD COLUMN paid BOOLEAN DEFAULT 0",
+        ]:
+            try:
+                conn.execute(text(sql))
+                conn.commit()
+            except Exception:
+                pass  # column already exists — safe to ignore
+
+_migrate()
 # ─────────────────────────────────────────────────────────────────────────────
 
 app = FastAPI(title="SNAG API")
@@ -389,11 +404,22 @@ def get_overtime(db: Session = Depends(database.get_db)):
             "hours": l.hours,
             "reason": l.reason,
             "approved": l.approved,
+            "paid": bool(l.paid),
             "engineer_name": l.engineer.name,
             "engineer_color": l.engineer.avatar_color,
         }
         for l in logs
     ]
+
+
+@app.patch("/overtime/{log_id}/paid")
+def toggle_paid(log_id: int, db: Session = Depends(database.get_db)):
+    log = db.query(models.OvertimeLog).filter(models.OvertimeLog.id == log_id).first()
+    if not log:
+        raise HTTPException(status_code=404, detail="Log not found")
+    log.paid = not log.paid
+    db.commit()
+    return {"paid": log.paid}
 
 
 @app.post("/overtime")

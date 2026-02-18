@@ -4,6 +4,7 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import JobModal from '../components/JobModal'
+import DetailModal from '../components/DetailModal'
 
 const API = 'https://snag-backend.onrender.com'
 
@@ -16,7 +17,8 @@ const PRIORITY_COLOR = {
 export default function PPMPage() {
   const { engineer } = useAuth()
   const [jobs, setJobs] = useState([])
-  const [modal, setModal] = useState(null) // { job, action: 'start'|'finish' }
+  const [modal, setModal] = useState(null)
+  const [detail, setDetail] = useState(null)
   const [filter, setFilter] = useState('All')
   const [showAdd, setShowAdd] = useState(false)
   const [newJob, setNewJob] = useState({ title: '', location: '', scheduled_date: format(new Date(), 'yyyy-MM-dd') })
@@ -71,11 +73,7 @@ export default function PPMPage() {
         <h1 className="text-3xl font-black text-gray-900">PPM Jobs 🔧</h1>
         <div className="flex gap-2 flex-wrap items-center">
           {statuses.map(s => (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className={`btn btn-sm ${filter === s ? 'btn-black' : 'btn-ghost'}`}
-            >
+            <button key={s} onClick={() => setFilter(s)} className={`btn btn-sm ${filter === s ? 'btn-black' : 'btn-ghost'}`}>
               {s}
             </button>
           ))}
@@ -120,7 +118,11 @@ export default function PPMPage() {
 
       <div className="grid gap-4">
         {filtered.map(job => (
-          <div key={job.id} className="card hover:shadow-md transition-shadow">
+          <div
+            key={job.id}
+            className="card hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => setDetail(job)}
+          >
             <div className="flex flex-col sm:flex-row sm:items-start gap-4">
               <div className="flex-1">
                 <div className="flex items-start justify-between gap-2 mb-1">
@@ -133,34 +135,15 @@ export default function PPMPage() {
                   {job.engineer_name && <span>👷 {job.engineer_name}</span>}
                 </div>
                 {job.notes && (
-                  <p className="mt-2 text-sm text-gray-600 bg-gray-50 rounded-xl px-3 py-2">
-                    {job.notes}
-                  </p>
-                )}
-                {job.photo_path && (
-                  <img
-                    src={job.photo_path}
-                    alt="job"
-                    className="mt-2 max-h-32 rounded-xl object-cover"
-                  />
+                  <p className="mt-2 text-sm text-gray-500 italic">📝 {job.notes.slice(0, 80)}{job.notes.length > 80 ? '…' : ''}</p>
                 )}
               </div>
-              <div className="flex gap-2 sm:flex-col">
+              <div className="flex gap-2 sm:flex-col" onClick={e => e.stopPropagation()}>
                 {job.status === 'Pending' && (
-                  <button
-                    onClick={() => setModal({ job, action: 'start' })}
-                    className="btn-orange btn-sm whitespace-nowrap"
-                  >
-                    ▶ Start
-                  </button>
+                  <button onClick={() => setModal({ job, action: 'start' })} className="btn-orange btn-sm whitespace-nowrap">▶ Start</button>
                 )}
                 {job.status === 'In Progress' && (
-                  <button
-                    onClick={() => setModal({ job, action: 'finish' })}
-                    className="btn-black btn-sm whitespace-nowrap"
-                  >
-                    ✅ Finish
-                  </button>
+                  <button onClick={() => setModal({ job, action: 'finish' })} className="btn-black btn-sm whitespace-nowrap">✅ Finish</button>
                 )}
               </div>
             </div>
@@ -181,6 +164,10 @@ export default function PPMPage() {
           onConfirm={handleConfirm}
           onCancel={() => setModal(null)}
         />
+      )}
+
+      {detail && (
+        <DetailModal item={detail} type="ppm" onClose={() => setDetail(null)} />
       )}
     </div>
   )

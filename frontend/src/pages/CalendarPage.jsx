@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from 'date-fns'
+import DetailModal from '../components/DetailModal'
 
 const API = 'https://snag-backend.onrender.com'
 
@@ -13,6 +14,8 @@ export default function CalendarPage() {
   const [current, setCurrent] = useState(new Date())
   const [selected, setSelected] = useState(null)
   const [newNote, setNewNote] = useState('')
+  const [detail, setDetail] = useState(null)
+  const [detailType, setDetailType] = useState('ppm')
   const noteInputRef = useRef(null)
 
   const fetchNotes = () =>
@@ -201,18 +204,25 @@ export default function CalendarPage() {
                 </div>
               )}
 
-              {/* Job Events */}
+              {/* Job Events — clickable */}
               {selectedEvents.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Jobs</p>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Jobs <span className="normal-case font-normal">(tap to view details)</span></p>
                   {selectedEvents.map((e, i) => (
-                    <div key={i} className={`p-3 rounded-2xl ${e.type === 'ppm' ? 'bg-red-50 border border-red-100' : 'bg-blue-50 border border-blue-100'}`}>
+                    <button
+                      key={i}
+                      onClick={() => { setDetailType(e.type); setDetail(e) }}
+                      className={`w-full text-left p-3 rounded-2xl transition-all active:scale-95
+                        ${e.type === 'ppm'
+                          ? 'bg-red-50 border border-red-100 hover:bg-red-100'
+                          : 'bg-blue-50 border border-blue-100 hover:bg-blue-100'}`}
+                    >
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`badge ${e.type === 'ppm' ? 'badge-red' : 'badge-blue'}`}>{e.type.toUpperCase()}</span>
                         <span className={`badge ${e.status === 'Completed' ? 'badge-green' : 'badge-gray'}`}>{e.status}</span>
                       </div>
                       <p className="text-sm font-medium text-gray-800">{e.title}</p>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
@@ -231,6 +241,10 @@ export default function CalendarPage() {
           )}
         </div>
       </div>
+
+      {detail && (
+        <DetailModal item={detail} type={detailType} onClose={() => setDetail(null)} />
+      )}
     </div>
   )
 }

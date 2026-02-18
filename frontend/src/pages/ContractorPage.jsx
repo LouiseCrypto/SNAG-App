@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
+import DetailModal from '../components/DetailModal'
 
 const API = 'https://snag-backend.onrender.com'
 
@@ -16,6 +17,7 @@ export default function ContractorPage() {
   const { engineer } = useAuth()
   const [issues, setIssues] = useState([])
   const [showAdd, setShowAdd] = useState(false)
+  const [detail, setDetail] = useState(null)
   const [form, setForm] = useState({ contractor_name: '', issue_description: '', severity: 'Medium', notes: '' })
 
   const fetchIssues = () =>
@@ -37,7 +39,8 @@ export default function ContractorPage() {
     }
   }
 
-  const toggleResolved = async (id) => {
+  const toggleResolved = async (e, id) => {
+    e.stopPropagation()
     try {
       await axios.patch(`${API}/contractors/${id}/resolve`)
       await fetchIssues()
@@ -94,12 +97,14 @@ export default function ContractorPage() {
         </div>
       )}
 
+      <p className="text-sm text-gray-400">Click any row to view full details.</p>
+
       <div className="card overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-gray-500 text-left">
               <th className="pb-3 pr-3 font-semibold">Contractor</th>
-              <th className="pb-3 pr-3 font-semibold">Issue</th>
+              <th className="pb-3 pr-3 font-semibold">Issue (summary)</th>
               <th className="pb-3 pr-3 font-semibold">Severity</th>
               <th className="pb-3 pr-3 font-semibold">Reported By</th>
               <th className="pb-3 pr-3 font-semibold">Date</th>
@@ -109,7 +114,11 @@ export default function ContractorPage() {
           </thead>
           <tbody className="divide-y divide-gray-50">
             {issues.map(issue => (
-              <tr key={issue.id} className={`hover:bg-orange-50 transition-colors ${issue.resolved ? 'opacity-60' : ''}`}>
+              <tr
+                key={issue.id}
+                onClick={() => setDetail(issue)}
+                className={`hover:bg-orange-50 transition-colors cursor-pointer ${issue.resolved ? 'opacity-60' : ''}`}
+              >
                 <td className="py-3 pr-3 font-medium text-gray-900">{issue.contractor_name}</td>
                 <td className="py-3 pr-3 text-gray-600 max-w-[200px]">
                   <p className="truncate">{issue.issue_description}</p>
@@ -126,7 +135,7 @@ export default function ContractorPage() {
                 </td>
                 <td className="py-3 text-center">
                   <button
-                    onClick={() => toggleResolved(issue.id)}
+                    onClick={(e) => toggleResolved(e, issue.id)}
                     className={`w-6 h-6 rounded-md border-2 flex items-center justify-center mx-auto transition-all active:scale-90
                       ${issue.resolved ? 'border-green-500 bg-green-500 text-white' : 'border-gray-300 hover:border-orange-400'}`}
                   >
@@ -146,6 +155,10 @@ export default function ContractorPage() {
           </tbody>
         </table>
       </div>
+
+      {detail && (
+        <DetailModal item={detail} type="contractor" onClose={() => setDetail(null)} />
+      )}
     </div>
   )
 }

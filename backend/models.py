@@ -105,6 +105,7 @@ class OvertimeLog(Base):
     hours = Column(Float)
     reason = Column(Text)
     approved = Column(Boolean, default=False)
+    paid = Column(Boolean, default=False)
     engineer_id = Column(Integer, ForeignKey("engineers.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
 

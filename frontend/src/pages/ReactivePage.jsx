@@ -4,6 +4,7 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import JobModal from '../components/JobModal'
+import DetailModal from '../components/DetailModal'
 
 const API = 'https://snag-backend.onrender.com'
 
@@ -23,6 +24,7 @@ export default function ReactivePage() {
   const { engineer } = useAuth()
   const [jobs, setJobs] = useState([])
   const [modal, setModal] = useState(null)
+  const [detail, setDetail] = useState(null)
   const [filter, setFilter] = useState('All')
   const [showAdd, setShowAdd] = useState(false)
   const [newJob, setNewJob] = useState({ title: '', location: '', priority: 'Normal' })
@@ -85,7 +87,6 @@ export default function ReactivePage() {
         </div>
       </div>
 
-      {/* Add job form */}
       {showAdd && (
         <div className="card animate-slideDown">
           <h2 className="font-bold text-gray-900 mb-4">New Reactive Job</h2>
@@ -121,7 +122,11 @@ export default function ReactivePage() {
 
       <div className="grid gap-4">
         {filtered.map(job => (
-          <div key={job.id} className="card hover:shadow-md transition-shadow">
+          <div
+            key={job.id}
+            className="card hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => setDetail(job)}
+          >
             <div className="flex flex-col sm:flex-row sm:items-start gap-4">
               <div className="flex-1">
                 <div className="flex items-start justify-between gap-2 mb-1 flex-wrap">
@@ -137,10 +142,10 @@ export default function ReactivePage() {
                   {job.engineer_name && <span>👷 {job.engineer_name}</span>}
                 </div>
                 {job.notes && (
-                  <p className="mt-2 text-sm text-gray-600 bg-gray-50 rounded-xl px-3 py-2">{job.notes}</p>
+                  <p className="mt-2 text-sm text-gray-500 italic">📝 {job.notes.slice(0, 80)}{job.notes.length > 80 ? '…' : ''}</p>
                 )}
               </div>
-              <div className="flex gap-2 sm:flex-col">
+              <div className="flex gap-2 sm:flex-col" onClick={e => e.stopPropagation()}>
                 {job.status === 'Pending' && (
                   <button onClick={() => setModal({ job, action: 'start' })} className="btn-orange btn-sm">▶ Start</button>
                 )}
@@ -167,6 +172,10 @@ export default function ReactivePage() {
           onConfirm={handleConfirm}
           onCancel={() => setModal(null)}
         />
+      )}
+
+      {detail && (
+        <DetailModal item={detail} type="reactive" onClose={() => setDetail(null)} />
       )}
     </div>
   )
