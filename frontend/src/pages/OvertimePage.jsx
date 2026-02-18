@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import confetti from 'canvas-confetti'
 import { format } from 'date-fns'
 
-const API = import.meta.env.VITE_API_URL
+const API = 'https://snag-backend.onrender.com'
 
 function fireConfetti() {
   const end = Date.now() + 2000

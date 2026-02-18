@@ -4,7 +4,7 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 import { formatDistanceToNow } from 'date-fns'
 
-const API = import.meta.env.VITE_API_URL
+const API = 'https://snag-backend.onrender.com'
 const EMOJIS = ['👍', '❤️', '😂', '😮', '🔥', '✅']
 
 export default function HandoverPage() {

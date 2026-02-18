@@ -4,7 +4,7 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from 'date-fns'
 
-const API = import.meta.env.VITE_API_URL
+const API = 'https://snag-backend.onrender.com'
 
 export default function CalendarPage() {
   const { engineer } = useAuth()

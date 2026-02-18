@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { format } from 'date-fns'
 
-const API = import.meta.env.VITE_API_URL
+const API = 'https://snag-backend.onrender.com'
 
 export default function CompletedJobsPage() {
   const [ppm, setPpm] = useState([])

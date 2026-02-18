@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import JobModal from '../components/JobModal'
 
-const API = import.meta.env.VITE_API_URL
+const API = 'https://snag-backend.onrender.com'
 
 const PRIORITY_BADGE = {
   Low: 'badge-blue',
