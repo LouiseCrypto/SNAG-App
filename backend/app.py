@@ -599,17 +599,38 @@ def get_calendar_data(db: Session = Depends(database.get_db)):
         events.append({
             "date": j.scheduled_date.date().isoformat() if j.scheduled_date else None,
             "type": "ppm",
-            "title": j.title,
-            "status": j.status,
             "id": j.id,
+            "title": j.title,
+            "location": j.location,
+            "status": j.status,
+            "notes": j.notes,
+            "notes_edited_at": j.notes_edited_at,
+            "on_hold_note": j.on_hold_note,
+            "photo_path": j.photo_path,
+            "scheduled_date": j.scheduled_date,
+            "started_at": j.started_at,
+            "completed_at": j.completed_at,
+            "engineer_id": j.engineer_id,
+            "engineer_name": j.engineer.name if j.engineer else None,
         })
     for j in reactive_jobs:
         events.append({
             "date": j.reported_at.date().isoformat() if j.reported_at else None,
             "type": "reactive",
-            "title": j.title,
-            "status": j.status,
             "id": j.id,
+            "title": j.title,
+            "location": j.location,
+            "priority": j.priority,
+            "status": j.status,
+            "notes": j.notes,
+            "notes_edited_at": j.notes_edited_at,
+            "on_hold_note": j.on_hold_note,
+            "photo_path": j.photo_path,
+            "reported_at": j.reported_at,
+            "started_at": j.started_at,
+            "completed_at": j.completed_at,
+            "engineer_id": j.engineer_id,
+            "engineer_name": j.engineer.name if j.engineer else None,
         })
     return events
 

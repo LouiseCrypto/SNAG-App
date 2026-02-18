@@ -50,4 +50,35 @@
   .badge-blue   { @apply badge bg-blue-100 text-blue-800; }
   .badge-gray   { @apply badge bg-gray-100 text-gray-700; }
   .badge-yellow { @apply badge bg-yellow-100 text-yellow-800; }
+
+  /* Shift button glow animations */
+  .shift-glow-green {
+    animation: shiftGlowGreen 2.2s ease-in-out infinite;
+  }
+  .shift-glow-red {
+    animation: shiftGlowRed 2.2s ease-in-out infinite;
+  }
+}
+
+/* Keyframes outside @layer so they are always emitted */
+@keyframes shiftGlowGreen {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55),
+                0 4px 24px 0 rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0),
+                0 4px 36px 0 rgba(34, 197, 94, 0);
+  }
+}
+
+@keyframes shiftGlowRed {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55),
+                0 4px 24px 0 rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0),
+                0 4px 36px 0 rgba(239, 68, 68, 0);
+  }
 }

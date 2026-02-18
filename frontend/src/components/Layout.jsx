@@ -154,8 +154,8 @@ export default function Layout() {
               transition-all duration-200 active:brightness-90
               disabled:opacity-70
               ${engineer?.is_on_shift
-                ? 'bg-gradient-to-r from-red-500 to-red-600'
-                : 'bg-gradient-to-r from-green-500 to-green-600'
+                ? 'bg-gradient-to-r from-red-500 to-red-600 shift-glow-red'
+                : 'bg-gradient-to-r from-green-500 to-green-600 shift-glow-green'
               }
             `}
           >
