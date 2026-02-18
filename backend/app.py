@@ -44,6 +44,14 @@ def _migrate():
     with database.engine.connect() as conn:
         for sql in [
             "ALTER TABLE overtime_logs ADD COLUMN paid BOOLEAN DEFAULT 0",
+            "ALTER TABLE ppm_jobs ADD COLUMN notes_edited_at DATETIME",
+            "ALTER TABLE ppm_jobs ADD COLUMN on_hold_note TEXT",
+            "ALTER TABLE ppm_jobs ADD COLUMN on_hold_at DATETIME",
+            "ALTER TABLE reactive_jobs ADD COLUMN notes_edited_at DATETIME",
+            "ALTER TABLE reactive_jobs ADD COLUMN on_hold_note TEXT",
+            "ALTER TABLE reactive_jobs ADD COLUMN on_hold_at DATETIME",
+            "ALTER TABLE handover_posts ADD COLUMN edited_at DATETIME",
+            "ALTER TABLE handover_replies ADD COLUMN edited_at DATETIME",
         ]:
             try:
                 conn.execute(text(sql))
@@ -103,6 +111,16 @@ class ReactionCreate(BaseModel):
     engineer_id: int
 
 
+class HandoverPostEdit(BaseModel):
+    engineer_id: int
+    content: str
+
+
+class HandoverReplyEdit(BaseModel):
+    engineer_id: int
+    content: str
+
+
 class OvertimeCreate(BaseModel):
     engineer_id: int
     date: str
@@ -125,6 +143,16 @@ class ReactiveJobCreate(BaseModel):
 class JobStartFinish(BaseModel):
     engineer_id: int
     notes: Optional[str] = None
+
+
+class JobHoldCreate(BaseModel):
+    engineer_id: int
+    note: str
+
+
+class JobNotesEdit(BaseModel):
+    engineer_id: int
+    notes: str
 
 
 class PartsOrderCreate(BaseModel):
@@ -190,6 +218,8 @@ def get_handover(db: Session = Depends(database.get_db)):
             "id": post.id,
             "content": post.content,
             "created_at": post.created_at,
+            "edited_at": post.edited_at,
+            "engineer_id": post.engineer_id,
             "engineer_name": post.engineer.name,
             "engineer_color": post.engineer.avatar_color,
             "reactions": reactions_summary,
@@ -198,6 +228,8 @@ def get_handover(db: Session = Depends(database.get_db)):
                     "id": r.id,
                     "content": r.content,
                     "created_at": r.created_at,
+                    "edited_at": r.edited_at,
+                    "engineer_id": r.engineer_id,
                     "engineer_name": r.engineer.name,
                     "engineer_color": r.engineer.avatar_color,
                 }
@@ -216,6 +248,19 @@ def create_handover_post(data: HandoverPostCreate, db: Session = Depends(databas
     return {"id": post.id, "message": "Post created"}
 
 
+@app.patch("/handover/{post_id}/edit")
+def edit_handover_post(post_id: int, data: HandoverPostEdit, db: Session = Depends(database.get_db)):
+    post = db.query(models.HandoverPost).filter(models.HandoverPost.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post.engineer_id != data.engineer_id:
+        raise HTTPException(status_code=403, detail="Not authorised to edit this post")
+    post.content = data.content
+    post.edited_at = datetime.utcnow()
+    db.commit()
+    return {"message": "Post updated"}
+
+
 @app.post("/handover/{post_id}/reply")
 def reply_to_post(post_id: int, data: HandoverReplyCreate, db: Session = Depends(database.get_db)):
     reply = models.HandoverReply(
@@ -224,6 +269,19 @@ def reply_to_post(post_id: int, data: HandoverReplyCreate, db: Session = Depends
     db.add(reply)
     db.commit()
     return {"message": "Reply added"}
+
+
+@app.patch("/handover/replies/{reply_id}/edit")
+def edit_handover_reply(reply_id: int, data: HandoverReplyEdit, db: Session = Depends(database.get_db)):
+    reply = db.query(models.HandoverReply).filter(models.HandoverReply.id == reply_id).first()
+    if not reply:
+        raise HTTPException(status_code=404, detail="Reply not found")
+    if reply.engineer_id != data.engineer_id:
+        raise HTTPException(status_code=403, detail="Not authorised to edit this reply")
+    reply.content = data.content
+    reply.edited_at = datetime.utcnow()
+    db.commit()
+    return {"message": "Reply updated"}
 
 
 @app.post("/handover/{post_id}/react")
@@ -258,7 +316,11 @@ def get_ppm_jobs(db: Session = Depends(database.get_db)):
             "scheduled_date": j.scheduled_date,
             "status": j.status,
             "notes": j.notes,
+            "notes_edited_at": j.notes_edited_at,
+            "on_hold_note": j.on_hold_note,
+            "on_hold_at": j.on_hold_at,
             "photo_path": j.photo_path,
+            "engineer_id": j.engineer_id,
             "engineer_name": j.engineer.name if j.engineer else None,
             "completed_at": j.completed_at,
         }
@@ -287,6 +349,8 @@ def start_ppm_job(job_id: int, data: JobStartFinish, db: Session = Depends(datab
     job.status = "In Progress"
     job.started_at = datetime.utcnow()
     job.engineer_id = data.engineer_id
+    if data.notes:
+        job.notes = data.notes
     db.commit()
     return {"message": "Job started"}
 
@@ -302,6 +366,41 @@ def finish_ppm_job(job_id: int, data: JobStartFinish, db: Session = Depends(data
         job.notes = data.notes
     db.commit()
     return {"message": "Job completed"}
+
+
+@app.post("/ppm/{job_id}/hold")
+def hold_ppm_job(job_id: int, data: JobHoldCreate, db: Session = Depends(database.get_db)):
+    job = db.query(models.PPMJob).filter(models.PPMJob.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job.status = "On Hold"
+    job.on_hold_note = data.note
+    job.on_hold_at = datetime.utcnow()
+    db.commit()
+    return {"message": "Job placed on hold"}
+
+
+@app.post("/ppm/{job_id}/resume")
+def resume_ppm_job(job_id: int, data: JobStartFinish, db: Session = Depends(database.get_db)):
+    job = db.query(models.PPMJob).filter(models.PPMJob.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job.status = "In Progress"
+    db.commit()
+    return {"message": "Job resumed"}
+
+
+@app.patch("/ppm/{job_id}/notes")
+def edit_ppm_notes(job_id: int, data: JobNotesEdit, db: Session = Depends(database.get_db)):
+    job = db.query(models.PPMJob).filter(models.PPMJob.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.engineer_id != data.engineer_id:
+        raise HTTPException(status_code=403, detail="Not authorised to edit this job's notes")
+    job.notes = data.notes
+    job.notes_edited_at = datetime.utcnow()
+    db.commit()
+    return {"message": "Notes updated", "notes_edited_at": job.notes_edited_at}
 
 
 @app.post("/ppm/{job_id}/photo")
@@ -332,9 +431,13 @@ def get_reactive_jobs(db: Session = Depends(database.get_db)):
             "priority": j.priority,
             "status": j.status,
             "notes": j.notes,
+            "notes_edited_at": j.notes_edited_at,
+            "on_hold_note": j.on_hold_note,
+            "on_hold_at": j.on_hold_at,
             "photo_path": j.photo_path,
             "reported_at": j.reported_at,
             "completed_at": j.completed_at,
+            "engineer_id": j.engineer_id,
             "engineer_name": j.engineer.name if j.engineer else None,
             "ticked": j.ticked,
         }
@@ -359,6 +462,8 @@ def start_reactive_job(job_id: int, data: JobStartFinish, db: Session = Depends(
     job.status = "In Progress"
     job.started_at = datetime.utcnow()
     job.engineer_id = data.engineer_id
+    if data.notes:
+        job.notes = data.notes
     db.commit()
     return {"message": "Job started"}
 
@@ -375,6 +480,41 @@ def finish_reactive_job(job_id: int, data: JobStartFinish, db: Session = Depends
         job.notes = data.notes
     db.commit()
     return {"message": "Job completed"}
+
+
+@app.post("/reactive/{job_id}/hold")
+def hold_reactive_job(job_id: int, data: JobHoldCreate, db: Session = Depends(database.get_db)):
+    job = db.query(models.ReactiveJob).filter(models.ReactiveJob.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job.status = "On Hold"
+    job.on_hold_note = data.note
+    job.on_hold_at = datetime.utcnow()
+    db.commit()
+    return {"message": "Job placed on hold"}
+
+
+@app.post("/reactive/{job_id}/resume")
+def resume_reactive_job(job_id: int, data: JobStartFinish, db: Session = Depends(database.get_db)):
+    job = db.query(models.ReactiveJob).filter(models.ReactiveJob.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job.status = "In Progress"
+    db.commit()
+    return {"message": "Job resumed"}
+
+
+@app.patch("/reactive/{job_id}/notes")
+def edit_reactive_notes(job_id: int, data: JobNotesEdit, db: Session = Depends(database.get_db)):
+    job = db.query(models.ReactiveJob).filter(models.ReactiveJob.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.engineer_id != data.engineer_id:
+        raise HTTPException(status_code=403, detail="Not authorised to edit this job's notes")
+    job.notes = data.notes
+    job.notes_edited_at = datetime.utcnow()
+    db.commit()
+    return {"message": "Notes updated", "notes_edited_at": job.notes_edited_at}
 
 
 @app.post("/reactive/{job_id}/photo")
@@ -405,6 +545,7 @@ def get_overtime(db: Session = Depends(database.get_db)):
             "reason": l.reason,
             "approved": l.approved,
             "paid": bool(l.paid),
+            "engineer_id": l.engineer_id,
             "engineer_name": l.engineer.name,
             "engineer_color": l.engineer.avatar_color,
         }

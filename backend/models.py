@@ -29,8 +29,11 @@ class PPMJob(Base):
     title = Column(String)
     location = Column(String)
     scheduled_date = Column(DateTime)
-    status = Column(String, default="Pending")  # Pending, In Progress, Completed
+    status = Column(String, default="Pending")  # Pending, In Progress, On Hold, Completed
     notes = Column(Text, nullable=True)
+    notes_edited_at = Column(DateTime, nullable=True)
+    on_hold_note = Column(Text, nullable=True)
+    on_hold_at = Column(DateTime, nullable=True)
     photo_path = Column(String, nullable=True)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
@@ -46,8 +49,11 @@ class ReactiveJob(Base):
     title = Column(String)
     location = Column(String)
     priority = Column(String, default="Normal")  # Low, Normal, High, Critical
-    status = Column(String, default="Pending")
+    status = Column(String, default="Pending")  # Pending, In Progress, On Hold, Completed
     notes = Column(Text, nullable=True)
+    notes_edited_at = Column(DateTime, nullable=True)
+    on_hold_note = Column(Text, nullable=True)
+    on_hold_at = Column(DateTime, nullable=True)
     photo_path = Column(String, nullable=True)
     reported_at = Column(DateTime, default=datetime.utcnow)
     started_at = Column(DateTime, nullable=True)
@@ -64,6 +70,7 @@ class HandoverPost(Base):
     id = Column(Integer, primary_key=True, index=True)
     content = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
+    edited_at = Column(DateTime, nullable=True)
     engineer_id = Column(Integer, ForeignKey("engineers.id"))
     thumbs_up = Column(Integer, default=0)
 
@@ -78,6 +85,7 @@ class HandoverReply(Base):
     id = Column(Integer, primary_key=True, index=True)
     content = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
+    edited_at = Column(DateTime, nullable=True)
     post_id = Column(Integer, ForeignKey("handover_posts.id"))
     engineer_id = Column(Integer, ForeignKey("engineers.id"))
 

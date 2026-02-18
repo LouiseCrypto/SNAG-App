@@ -43,7 +43,8 @@ export default function DetailModal({ item, type, onClose }) {
               {item.status && (
                 <span className={`badge ${
                   item.status === 'Completed' || item.status === 'Resolved' ? 'badge-green' :
-                  item.status === 'In Progress' ? 'badge-orange' : 'badge-gray'
+                  item.status === 'In Progress' ? 'badge-orange' :
+                  item.status === 'On Hold' ? 'badge-yellow' : 'badge-gray'
                 }`}>{item.status}</span>
               )}
 
@@ -89,9 +90,22 @@ export default function DetailModal({ item, type, onClose }) {
               <Row label="Engineer"   value={item.engineer_name} />
               {item.notes && (
                 <div className="mt-4">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Notes</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Notes</p>
+                    {item.notes_edited_at && (
+                      <span className="text-xs text-gray-400 italic">· edited {fmtDate(item.notes_edited_at)}</span>
+                    )}
+                  </div>
                   <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
                     {item.notes}
+                  </div>
+                </div>
+              )}
+              {item.on_hold_note && (
+                <div className="mt-4">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Hold Reason</p>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                    {item.on_hold_note}
                   </div>
                 </div>
               )}

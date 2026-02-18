@@ -1,6 +1,10 @@
 import React, { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import axios from 'axios'
+import toast from 'react-hot-toast'
+
+const API = 'https://snag-backend.onrender.com'
 
 const navItems = [
   { to: '/app',            label: 'Dashboard',    icon: '🏠', end: true },
@@ -15,13 +19,27 @@ const navItems = [
 ]
 
 export default function Layout() {
-  const { engineer, logout } = useAuth()
+  const { engineer, logout, updateEngineer } = useAuth()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [shifting, setShifting] = useState(false)
 
   const handleLogout = () => {
     logout()
     navigate('/')
+  }
+
+  const toggleShift = async () => {
+    setShifting(true)
+    try {
+      const res = await axios.post(`${API}/engineers/shift-toggle`, { engineer_id: engineer.id })
+      updateEngineer({ is_on_shift: res.data.is_on_shift, shift_start: res.data.shift_start })
+      toast.success(res.data.is_on_shift ? '✅ Shift started!' : '👋 Shift finished!')
+    } catch {
+      toast.error('Failed to toggle shift')
+    } finally {
+      setShifting(false)
+    }
   }
 
   return (
@@ -59,17 +77,38 @@ export default function Layout() {
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* Avatar */}
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0"
               style={{ backgroundColor: engineer?.avatar_color || '#F97316' }}
             >
               {engineer?.name?.[0] ?? '?'}
             </div>
-            <span className="hidden sm:block text-sm font-semibold text-gray-700">
+            <span className="hidden sm:block text-sm font-semibold text-gray-700 mr-1">
               {engineer?.name}
             </span>
+
+            {/* Shift Toggle Button */}
+            <button
+              onClick={toggleShift}
+              disabled={shifting}
+              title={engineer?.is_on_shift ? 'Finish Shift' : 'Start Shift'}
+              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95 disabled:opacity-60 ${
+                engineer?.is_on_shift
+                  ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
+                  : 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
+              }`}
+            >
+              {shifting ? (
+                <span className="animate-spin inline-block">⟳</span>
+              ) : engineer?.is_on_shift ? (
+                <>🔴 Finish Shift</>
+              ) : (
+                <>🟢 Start Shift</>
+              )}
+            </button>
+
             <button
               onClick={handleLogout}
               className="btn btn-ghost btn-sm text-sm hidden sm:flex"
@@ -112,9 +151,21 @@ export default function Layout() {
                   <span>{icon}</span> {label}
                 </NavLink>
               ))}
+              {/* Mobile shift toggle */}
+              <button
+                onClick={() => { toggleShift(); setMenuOpen(false) }}
+                disabled={shifting}
+                className={`col-span-2 mt-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-60 ${
+                  engineer?.is_on_shift
+                    ? 'bg-red-50 text-red-600 border border-red-200'
+                    : 'bg-green-50 text-green-700 border border-green-200'
+                }`}
+              >
+                {shifting ? '⟳ Updating…' : engineer?.is_on_shift ? '🔴 Finish Shift' : '🟢 Start Shift'}
+              </button>
               <button
                 onClick={handleLogout}
-                className="col-span-2 mt-2 btn btn-ghost btn-sm text-sm"
+                className="col-span-2 mt-1 btn btn-ghost btn-sm text-sm"
               >
                 Sign out
               </button>

@@ -14,6 +14,10 @@ export default function HandoverPage() {
   const [replyMap, setReplyMap] = useState({})
   const [openReply, setOpenReply] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [editPost, setEditPost] = useState(null)      // post id being edited
+  const [editPostText, setEditPostText] = useState('')
+  const [editReply, setEditReply] = useState(null)    // reply id being edited
+  const [editReplyText, setEditReplyText] = useState('')
   const bottomRef = useRef(null)
 
   const fetchPosts = () =>
@@ -55,6 +59,38 @@ export default function HandoverPage() {
       await axios.post(`${API}/handover/${postId}/react`, { emoji, engineer_id: engineer.id })
       await fetchPosts()
     } catch {}
+  }
+
+  const savePostEdit = async (postId) => {
+    if (!editPostText.trim()) return
+    try {
+      await axios.patch(`${API}/handover/${postId}/edit`, { engineer_id: engineer.id, content: editPostText })
+      setEditPost(null)
+      await fetchPosts()
+      toast.success('Post updated ✏️')
+    } catch (err) {
+      if (err.response?.status === 403) {
+        toast.error('You can only edit your own posts')
+      } else {
+        toast.error('Failed to update post')
+      }
+    }
+  }
+
+  const saveReplyEdit = async (replyId) => {
+    if (!editReplyText.trim()) return
+    try {
+      await axios.patch(`${API}/handover/replies/${replyId}/edit`, { engineer_id: engineer.id, content: editReplyText })
+      setEditReply(null)
+      await fetchPosts()
+      toast.success('Reply updated ✏️')
+    } catch (err) {
+      if (err.response?.status === 403) {
+        toast.error('You can only edit your own replies')
+      } else {
+        toast.error('Failed to update reply')
+      }
+    }
   }
 
   return (
@@ -111,13 +147,45 @@ export default function HandoverPage() {
                 {post.engineer_name?.[0]}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className="font-semibold text-gray-900">{post.engineer_name}</span>
                   <span className="text-xs text-gray-400">
                     {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
                   </span>
+                  {post.edited_at && (
+                    <span className="text-xs text-gray-400 italic">
+                      · edited {formatDistanceToNow(new Date(post.edited_at), { addSuffix: true })}
+                    </span>
+                  )}
+                  {post.engineer_id === engineer?.id && editPost !== post.id && (
+                    <button
+                      onClick={() => { setEditPost(post.id); setEditPostText(post.content) }}
+                      className="text-xs text-gray-400 hover:text-orange-500 transition-colors ml-auto"
+                      title="Edit post"
+                    >
+                      ✏️ Edit
+                    </button>
+                  )}
                 </div>
-                <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{post.content}</p>
+
+                {/* Post content or inline editor */}
+                {editPost === post.id ? (
+                  <div className="space-y-2">
+                    <textarea
+                      autoFocus
+                      value={editPostText}
+                      onChange={e => setEditPostText(e.target.value)}
+                      rows={3}
+                      className="w-full border border-orange-300 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 resize-none"
+                    />
+                    <div className="flex gap-2">
+                      <button onClick={() => savePostEdit(post.id)} className="btn-orange btn-sm">Save</button>
+                      <button onClick={() => setEditPost(null)} className="btn-ghost btn-sm">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{post.content}</p>
+                )}
               </div>
             </div>
 
@@ -149,12 +217,44 @@ export default function HandoverPage() {
                     >
                       {r.engineer_name?.[0]}
                     </div>
-                    <div>
-                      <span className="text-xs font-semibold text-gray-700">{r.engineer_name} </span>
-                      <span className="text-xs text-gray-500">
-                        {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
-                      </span>
-                      <p className="text-sm text-gray-700 mt-0.5">{r.content}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-semibold text-gray-700">{r.engineer_name}</span>
+                        <span className="text-xs text-gray-400">
+                          {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
+                        </span>
+                        {r.edited_at && (
+                          <span className="text-xs text-gray-400 italic">
+                            · edited {formatDistanceToNow(new Date(r.edited_at), { addSuffix: true })}
+                          </span>
+                        )}
+                        {r.engineer_id === engineer?.id && editReply !== r.id && (
+                          <button
+                            onClick={() => { setEditReply(r.id); setEditReplyText(r.content) }}
+                            className="text-xs text-gray-400 hover:text-orange-500 transition-colors"
+                            title="Edit reply"
+                          >
+                            ✏️
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Reply content or inline editor */}
+                      {editReply === r.id ? (
+                        <div className="flex gap-2 mt-1">
+                          <input
+                            autoFocus
+                            value={editReplyText}
+                            onChange={e => setEditReplyText(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && saveReplyEdit(r.id)}
+                            className="flex-1 border border-orange-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:border-orange-400"
+                          />
+                          <button onClick={() => saveReplyEdit(r.id)} className="btn-orange btn-sm">Save</button>
+                          <button onClick={() => setEditReply(null)} className="btn-ghost btn-sm">✕</button>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-700 mt-0.5">{r.content}</p>
+                      )}
                     </div>
                   </div>
                 ))}
