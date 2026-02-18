@@ -10,6 +10,9 @@ import models
 import database
 from pydantic import BaseModel
 
+# Log which database file is in use (visible in Render logs)
+print(f"[SNAG] Database path: {database._DB_PATH}")
+
 # Create DB tables
 models.Base.metadata.create_all(bind=database.engine)
 
@@ -26,13 +29,21 @@ _ENGINEERS = [
 ]
 
 def _seed():
+    """Insert any missing engineers by name (idempotent — safe to call on every startup)."""
     db = database.SessionLocal()
     try:
-        if db.query(models.Engineer).count() == 0:
-            for e in _ENGINEERS:
+        inserted = 0
+        for e in _ENGINEERS:
+            if not db.query(models.Engineer).filter_by(name=e["name"]).first():
                 db.add(models.Engineer(**e))
+                inserted += 1
+        if inserted:
             db.commit()
-            print(f"Seeded {len(_ENGINEERS)} engineers.")
+            print(f"Seeded {inserted} missing engineer(s).")
+        else:
+            print("All engineers already present — skipping seed.")
+    except Exception as ex:
+        print(f"Seed error: {ex}")
     finally:
         db.close()
 
@@ -702,3 +713,33 @@ def delete_calendar_note(note_id: int, db: Session = Depends(database.get_db)):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+# ─── Admin / Diagnostics ─────────────────────────────────────────────────────
+
+@app.get("/admin/db-info")
+def db_info(db: Session = Depends(database.get_db)):
+    """Return the live database path and engineer count — useful for diagnosing Render disk issues."""
+    engineer_count = db.query(models.Engineer).count()
+    return {
+        "db_url": str(database.SQLALCHEMY_DATABASE_URL),
+        "db_path": database._DB_PATH,
+        "engineer_count": engineer_count,
+        "engineers": [e.name for e in db.query(models.Engineer).all()],
+    }
+
+
+@app.post("/admin/reseed")
+def admin_reseed(db: Session = Depends(database.get_db)):
+    """Force-insert any missing engineers. Safe to call at any time — will not duplicate."""
+    inserted = []
+    for e in _ENGINEERS:
+        if not db.query(models.Engineer).filter_by(name=e["name"]).first():
+            db.add(models.Engineer(**e))
+            inserted.append(e["name"])
+    if inserted:
+        db.commit()
+    return {
+        "inserted": inserted,
+        "message": f"Inserted {len(inserted)} engineer(s)." if inserted else "All engineers already present.",
+    }
