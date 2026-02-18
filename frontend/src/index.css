@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  body {
+    @apply bg-white text-gray-900 font-sans antialiased;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-gray-100; }
+  ::-webkit-scrollbar-thumb { @apply bg-orange-400 rounded-full; }
+}
+
+@layer components {
+  /* Squishy button base */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-semibold rounded-2xl
+           px-5 py-3 transition-all duration-150 cursor-pointer select-none
+           active:scale-95 active:shadow-inner;
+  }
+  .btn-orange {
+    @apply btn bg-orange-500 text-white shadow-lg shadow-orange-200
+           hover:bg-orange-600 hover:shadow-xl hover:shadow-orange-300
+           active:bg-orange-700;
+  }
+  .btn-black {
+    @apply btn bg-gray-900 text-white shadow-lg
+           hover:bg-gray-800 hover:shadow-xl
+           active:bg-gray-950;
+  }
+  .btn-ghost {
+    @apply btn bg-white text-gray-700 border border-gray-200 shadow-sm
+           hover:bg-gray-50 hover:border-gray-300;
+  }
+  .btn-sm {
+    @apply px-3 py-2 text-sm rounded-xl;
+  }
+  /* Card */
+  .card {
+    @apply bg-white rounded-3xl border border-gray-100 shadow-sm p-6;
+  }
+  /* Status badge */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+  .badge-green  { @apply badge bg-green-100 text-green-800; }
+  .badge-orange { @apply badge bg-orange-100 text-orange-800; }
+  .badge-red    { @apply badge bg-red-100 text-red-800; }
+  .badge-blue   { @apply badge bg-blue-100 text-blue-800; }
+  .badge-gray   { @apply badge bg-gray-100 text-gray-700; }
+}

@@ -1,0 +1,16 @@
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/*.pyc
+backend/uploads/
+
+# Database (keep schema/seed, not live data)
+backend/snag.db
+frontend/snag.db
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
