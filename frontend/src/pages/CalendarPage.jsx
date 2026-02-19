@@ -207,21 +207,51 @@ export default function CalendarPage() {
               {/* Job Events — clickable */}
               {selectedEvents.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Jobs <span className="normal-case font-normal">(tap to view details)</span></p>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Jobs <span className="normal-case font-normal">(tap for full report)</span></p>
                   {selectedEvents.map((e, i) => (
                     <button
                       key={i}
                       onClick={() => { setDetailType(e.type); setDetail(e) }}
-                      className={`w-full text-left p-3 rounded-2xl transition-all active:scale-95
+                      className={`w-full text-left p-3 rounded-2xl transition-all active:scale-95 group
                         ${e.type === 'ppm'
                           ? 'bg-red-50 border border-red-100 hover:bg-red-100'
                           : 'bg-blue-50 border border-blue-100 hover:bg-blue-100'}`}
                     >
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1.5">
                         <span className={`badge ${e.type === 'ppm' ? 'badge-red' : 'badge-blue'}`}>{e.type.toUpperCase()}</span>
-                        <span className={`badge ${e.status === 'Completed' ? 'badge-green' : 'badge-gray'}`}>{e.status}</span>
+                        <span className={`badge ${
+                          e.status === 'Completed' ? 'badge-green' :
+                          e.status === 'In Progress' ? 'badge-orange' :
+                          e.status === 'On Hold' ? 'badge-yellow' : 'badge-gray'
+                        }`}>{e.status}</span>
                       </div>
-                      <p className="text-sm font-medium text-gray-800">{e.title}</p>
+                      <p className="text-sm font-semibold text-gray-800 leading-tight">{e.title}</p>
+                      {e.location && (
+                        <p className="text-xs text-gray-500 mt-0.5">📍 {e.location}</p>
+                      )}
+                      {(e.engineer_name || e.completed_at) && (
+                        <div className="flex items-center justify-between mt-1.5">
+                          {e.engineer_name ? (
+                            <div className="flex items-center gap-1.5">
+                              <div
+                                className="w-4 h-4 rounded flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0"
+                                style={{ backgroundColor: e.engineer_color || '#F97316' }}
+                              >
+                                {e.engineer_name[0]}
+                              </div>
+                              <span className="text-xs text-gray-500">{e.engineer_name}</span>
+                            </div>
+                          ) : <span />}
+                          {e.completed_at && (
+                            <span className="text-xs text-green-600 font-semibold">
+                              ✓ {format(new Date(e.completed_at), 'HH:mm')}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1.5 text-right group-hover:text-gray-600 transition-colors">
+                        Full report →
+                      </p>
                     </button>
                   ))}
                 </div>

@@ -82,12 +82,66 @@ export default function DetailModal({ item, type, onClose }) {
           {/* Job fields */}
           {isJob && (
             <div>
-              <Row label="Location"   value={item.location} />
-              <Row label="Scheduled"  value={fmtDate(item.scheduled_date)} />
-              <Row label="Reported"   value={fmtDate(item.reported_at)} />
-              <Row label="Started"    value={fmtDate(item.started_at)} />
-              <Row label="Completed"  value={fmtDate(item.completed_at)} />
-              <Row label="Engineer"   value={item.engineer_name} />
+              {/* ── Completed By Banner ── */}
+              {item.status === 'Completed' && item.engineer_name && (
+                <div className="mb-4 flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl p-4">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm"
+                    style={{ backgroundColor: item.engineer_color || '#10B981' }}
+                  >
+                    {item.engineer_name[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">Completed by</p>
+                    <p className="font-bold text-gray-900">{item.engineer_name}</p>
+                    {item.completed_at && (
+                      <p className="text-xs text-gray-500">{fmtDate(item.completed_at)}</p>
+                    )}
+                  </div>
+                  <span className="text-2xl flex-shrink-0">✅</span>
+                </div>
+              )}
+
+              {/* ── On Hold Banner ── */}
+              {item.status === 'On Hold' && (
+                <div className="mb-4 bg-yellow-50 border border-yellow-300 rounded-2xl p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-xl">⏸</span>
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-yellow-700 uppercase tracking-wide">On Hold</p>
+                      {item.on_hold_at && <p className="text-xs text-gray-500">{fmtDate(item.on_hold_at)}</p>}
+                    </div>
+                    {item.engineer_name && (
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-sm"
+                          style={{ backgroundColor: item.engineer_color || '#F59E0B' }}
+                        >
+                          {item.engineer_name[0]}
+                        </div>
+                        <span className="text-sm font-medium text-gray-700">{item.engineer_name}</span>
+                      </div>
+                    )}
+                  </div>
+                  {item.on_hold_note && (
+                    <p className="text-sm text-yellow-900 bg-yellow-100 rounded-xl px-3 py-2 leading-relaxed">
+                      {item.on_hold_note}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <Row label="Location"  value={item.location} />
+              <Row label="Scheduled" value={fmtDate(item.scheduled_date)} />
+              <Row label="Reported"  value={fmtDate(item.reported_at)} />
+              <Row label="Started"   value={fmtDate(item.started_at)} />
+              {item.status !== 'Completed' && (
+                <Row label="Completed" value={fmtDate(item.completed_at)} />
+              )}
+              {item.status !== 'Completed' && item.status !== 'On Hold' && (
+                <Row label="Engineer" value={item.engineer_name} />
+              )}
+
               {item.notes && (
                 <div className="mt-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -98,14 +152,6 @@ export default function DetailModal({ item, type, onClose }) {
                   </div>
                   <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
                     {item.notes}
-                  </div>
-                </div>
-              )}
-              {item.on_hold_note && (
-                <div className="mt-4">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Hold Reason</p>
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                    {item.on_hold_note}
                   </div>
                 </div>
               )}

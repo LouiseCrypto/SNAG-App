@@ -333,6 +333,7 @@ def get_ppm_jobs(db: Session = Depends(database.get_db)):
             "photo_path": j.photo_path,
             "engineer_id": j.engineer_id,
             "engineer_name": j.engineer.name if j.engineer else None,
+            "engineer_color": j.engineer.avatar_color if j.engineer else None,
             "completed_at": j.completed_at,
         }
         for j in jobs
@@ -450,6 +451,7 @@ def get_reactive_jobs(db: Session = Depends(database.get_db)):
             "completed_at": j.completed_at,
             "engineer_id": j.engineer_id,
             "engineer_name": j.engineer.name if j.engineer else None,
+            "engineer_color": j.engineer.avatar_color if j.engineer else None,
             "ticked": j.ticked,
         }
         for j in jobs
@@ -606,12 +608,14 @@ def get_calendar_data(db: Session = Depends(database.get_db)):
             "notes": j.notes,
             "notes_edited_at": j.notes_edited_at,
             "on_hold_note": j.on_hold_note,
+            "on_hold_at": j.on_hold_at,
             "photo_path": j.photo_path,
             "scheduled_date": j.scheduled_date,
             "started_at": j.started_at,
             "completed_at": j.completed_at,
             "engineer_id": j.engineer_id,
             "engineer_name": j.engineer.name if j.engineer else None,
+            "engineer_color": j.engineer.avatar_color if j.engineer else None,
         })
     for j in reactive_jobs:
         events.append({
@@ -625,12 +629,14 @@ def get_calendar_data(db: Session = Depends(database.get_db)):
             "notes": j.notes,
             "notes_edited_at": j.notes_edited_at,
             "on_hold_note": j.on_hold_note,
+            "on_hold_at": j.on_hold_at,
             "photo_path": j.photo_path,
             "reported_at": j.reported_at,
             "started_at": j.started_at,
             "completed_at": j.completed_at,
             "engineer_id": j.engineer_id,
             "engineer_name": j.engineer.name if j.engineer else None,
+            "engineer_color": j.engineer.avatar_color if j.engineer else None,
         })
     return events
 
