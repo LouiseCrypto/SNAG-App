@@ -31,8 +31,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     Promise.all([
-      axios.get(`${API}/ppm`),
-      axios.get(`${API}/reactive`),
+      axios.get(`${API}/ppm?engineer_id=${engineer?.id}`),
+      axios.get(`${API}/reactive?engineer_id=${engineer?.id}`),
       axios.get(`${API}/overtime`),
     ]).then(([ppm, reactive, ot]) => {
       setStats({

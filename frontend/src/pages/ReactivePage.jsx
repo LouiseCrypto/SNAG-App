@@ -35,7 +35,7 @@ export default function ReactivePage() {
   const [editNotesText, setEditNotesText] = useState('')
 
   const fetchJobs = () =>
-    axios.get(`${API}/reactive`).then(r => setJobs(r.data)).catch(() => {})
+    axios.get(`${API}/reactive?engineer_id=${engineer?.id}`).then(r => setJobs(r.data)).catch(() => {})
 
   useEffect(() => { fetchJobs() }, [])
 
@@ -103,7 +103,7 @@ export default function ReactivePage() {
     e.preventDefault()
     if (!newJob.title || !newJob.location) { toast.error('Fill all fields'); return }
     try {
-      await axios.post(`${API}/reactive`, newJob)
+      await axios.post(`${API}/reactive`, { ...newJob, engineer_id: engineer.id })
       setNewJob({ title: '', location: '', priority: 'Normal' })
       setShowAdd(false)
       await fetchJobs()
@@ -115,21 +115,18 @@ export default function ReactivePage() {
 
   const statuses = ['All', 'Pending', 'In Progress', 'Completed']
 
-  // Show: every Pending job (anyone can pick one up) + jobs assigned to this engineer
-  const myJobs = jobs.filter(j =>
-    j.status === 'Pending' || j.engineer_id === engineer?.id
-  )
-  const onHoldJobs = myJobs.filter(j => j.status === 'On Hold')
+  // Backend already filtered by engineer_id — show only this engineer's jobs
+  const onHoldJobs = jobs.filter(j => j.status === 'On Hold')
   const filtered = filter === 'All'
-    ? myJobs.filter(j => j.status !== 'On Hold')
-    : myJobs.filter(j => j.status === filter)
+    ? jobs.filter(j => j.status !== 'On Hold')
+    : jobs.filter(j => j.status === filter)
 
   return (
     <div className="space-y-5 animate-fadeIn">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-black text-gray-900">Reactive Jobs ⚡</h1>
-          <p className="text-xs text-gray-400 mt-0.5">Showing your jobs &amp; all unassigned pending jobs</p>
+          <p className="text-xs text-gray-400 mt-0.5">Showing only your assigned jobs</p>
         </div>
         <div className="flex gap-2 flex-wrap items-center">
           {statuses.map(s => (

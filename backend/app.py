@@ -143,12 +143,14 @@ class PPMJobCreate(BaseModel):
     title: str
     location: str
     scheduled_date: str
+    engineer_id: Optional[int] = None
 
 
 class ReactiveJobCreate(BaseModel):
     title: str
     location: str
     priority: str = "Normal"
+    engineer_id: Optional[int] = None
 
 
 class JobStartFinish(BaseModel):
@@ -317,8 +319,11 @@ def react_to_post(post_id: int, data: ReactionCreate, db: Session = Depends(data
 # ─── PPM Jobs ────────────────────────────────────────────────────────────────
 
 @app.get("/ppm")
-def get_ppm_jobs(db: Session = Depends(database.get_db)):
-    jobs = db.query(models.PPMJob).order_by(models.PPMJob.scheduled_date).all()
+def get_ppm_jobs(engineer_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    query = db.query(models.PPMJob).order_by(models.PPMJob.scheduled_date)
+    if engineer_id is not None:
+        query = query.filter(models.PPMJob.engineer_id == engineer_id)
+    jobs = query.all()
     return [
         {
             "id": j.id,
@@ -346,6 +351,7 @@ def create_ppm_job(data: PPMJobCreate, db: Session = Depends(database.get_db)):
         title=data.title,
         location=data.location,
         scheduled_date=datetime.fromisoformat(data.scheduled_date),
+        engineer_id=data.engineer_id,
     )
     db.add(job)
     db.commit()
@@ -433,8 +439,11 @@ async def upload_ppm_photo(job_id: int, file: UploadFile = File(...), db: Sessio
 # ─── Reactive Jobs ───────────────────────────────────────────────────────────
 
 @app.get("/reactive")
-def get_reactive_jobs(db: Session = Depends(database.get_db)):
-    jobs = db.query(models.ReactiveJob).order_by(models.ReactiveJob.reported_at.desc()).all()
+def get_reactive_jobs(engineer_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    query = db.query(models.ReactiveJob).order_by(models.ReactiveJob.reported_at.desc())
+    if engineer_id is not None:
+        query = query.filter(models.ReactiveJob.engineer_id == engineer_id)
+    jobs = query.all()
     return [
         {
             "id": j.id,
@@ -460,7 +469,7 @@ def get_reactive_jobs(db: Session = Depends(database.get_db)):
 
 @app.post("/reactive")
 def create_reactive_job(data: ReactiveJobCreate, db: Session = Depends(database.get_db)):
-    job = models.ReactiveJob(title=data.title, location=data.location, priority=data.priority)
+    job = models.ReactiveJob(title=data.title, location=data.location, priority=data.priority, engineer_id=data.engineer_id)
     db.add(job)
     db.commit()
     db.refresh(job)
